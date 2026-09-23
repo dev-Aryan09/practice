@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/user.model.js";
-import config from "../config/config.js";
+import { generateTokens } from "../utils/auth.js";
 
 const router = Router();
 
@@ -45,11 +45,7 @@ router.post("/register", async (req, res) => {
       password: passwordHash,
     });
 
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      config.REFRESH_TOKEN_SECRET,
-      { expiresIn: "7d" },
-    );
+    const { accessToken, refreshToken } = generateTokens({ userId: user._id });
 
     // update existing doc in DB
     user.refreshToken = refreshToken;
@@ -57,10 +53,6 @@ router.post("/register", async (req, res) => {
 
     // set in Cookie Storage
     res.cookie("refreshToken", refreshToken, { httpOnly: true });
-
-    const accessToken = jwt.sign({ id: user._d }, config.ACCESS_TOKEN_SECRET, {
-      expiresIn: "15m",
-    });
 
     // response
     return res.status(201).json({
