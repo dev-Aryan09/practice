@@ -75,4 +75,54 @@ router.post("/register", async (req, res) => {
   }
 });
 
+/**
+ * @POST /api/auth/login
+ */
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Missing email or password",
+    });
+  }
+
+  try {
+    const user = await UserModel.findOne({ email });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Unauthorized, invalid password or email",
+      });
+    }
+
+    const { accessToken, refreshToken } = generateTokens({ userId: user._id });
+
+    // update existing doc in DB
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // set RT to Cookie Storage
+    res.cookie("refreshToken", refreshToken, { httpOnly: true });
+
+    // response
+    return res.status(200).json({
+      message: "User logged in successfully",
+      data: {
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+      },
+      accessToken: accessToken,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: error,
+    });
+  }
+});
+
 export default router;
