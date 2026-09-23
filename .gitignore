@@ -1,0 +1,39 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+*.ini
+
+# Logs and Databases
+*.log
+*.sqlite
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Local Environment / Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Common Dependency Folders
+node_modules/
+bower_components/
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Build and Output Directories
+dist/
+build/
+out/
+target/
