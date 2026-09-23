@@ -18,9 +18,13 @@ const UserSchema = new mongoose.Schema({
     required: true,
     minLength: [6, "Minimum 6 characters are required"],
   },
+  /*
+  If we do "required: true", then mongoose will throw an error because
+  we will update the document after its creation in DB using "await user.save()"
+  */
   refreshToken: {
-    Type: String,
-    required: true,
+    type: String,
+    // required: true,
   },
 });
 
