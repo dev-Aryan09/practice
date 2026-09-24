@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/user.model.js";
-import { generateTokens } from "../utils/auth.js";
+import { generateTokens, verifyAccessToken } from "../utils/auth.js";
 
 const router = Router();
 
@@ -125,4 +125,37 @@ router.post("/login", async (req, res) => {
   }
 });
 
+/**
+ * @GET /api/auth/getMe
+ */
+router.get("/getMe", async (req, res) => {
+  const accessToken = req.headers.authorization.split(" ")[1];
+
+  if (!accessToken) {
+    return res.status(401).json({
+      message: "Unauthorized, invalid or missing access token",
+    });
+  }
+
+  try {
+    const decoded = verifyAccessToken(accessToken);
+
+    const user = await UserModel.findById(decoded.userId);
+
+    return res.status(200).json({
+      message: "User details fetched successfully",
+      data: {
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: error,
+    });
+  }
+});
 export default router;
