@@ -1,7 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
+import useApi from "../shared/useApi";
+import { useAuthContext } from "../context/AuthContext";
 
 const Register = () => {
+  const api = useApi();
+  const { setUser, setAccessToken } = useAuthContext();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,11 +19,14 @@ const Register = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        "http://localhost:5173/api/auth/register",
-        formData,
-      );
+      /**
+       * @POST http://localhost:5173/api/auth/register
+       */
+      const response = await api.post("/api/auth/register", formData);
       console.log(response);
+
+      setUser(response.data.data.user);
+      setAccessToken(response.data.accessToken);
     } catch (error) {
       console.log(
         "Error in Registration",
