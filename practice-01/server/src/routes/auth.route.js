@@ -2,7 +2,11 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserModel from "../models/user.model.js";
-import { generateTokens, verifyAccessToken } from "../utils/auth.js";
+import {
+  generateTokens,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../utils/auth.js";
 
 const router = Router();
 
@@ -154,6 +158,54 @@ router.get("/getMe", async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Internal Server Error",
+      error: error,
+    });
+  }
+});
+
+/**
+ * @POST /api/auth/refresh
+ */
+router.post("/refresh", async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      message: "Unauthorized, invalid or missing refresh token",
+    });
+  }
+
+  try {
+    const decoded = verifyRefreshToken(refreshToken);
+
+    const user = await UserModel.findById(decoded.userId);
+
+    if (refreshToken !== user.refreshToken) {
+      // remove RT from DB in case of security breach
+      user.refreshToken = null;
+      await user.save();
+
+      return res.status(403).json({
+        message: "Forbidden, refresh token mismatch",
+      });
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens({
+      userId: user._id,
+    });
+
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", newRefreshToken, { httpOnly: true });
+
+    return res.status(201).json({
+      message: "Refresh Token Created Successfully",
+      newRefreshToken,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal Server Error in creating new refresh token",
       error: error,
     });
   }
